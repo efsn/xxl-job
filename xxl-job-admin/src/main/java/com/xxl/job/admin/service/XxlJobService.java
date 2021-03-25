@@ -45,6 +45,8 @@ public interface XxlJobService {
 	 */
 	public ReturnT<String> update(XxlJobInfo jobInfo);
 
+	public ReturnT<String> updateSchedule(XxlJobInfo jobInfo);
+
 	/**
 	 * remove job
 	 * 	 *

@@ -22,7 +22,7 @@ Content-Type: application/json
 XXL-JOB-ACCESS-TOKEN: abc123
 
 {
-  "id": 6,
+  "id": 3,
   "jobGroup": "1",
   "jobDesc": "dynamic-1",
   "author": "dynamic",
@@ -33,6 +33,28 @@ XXL-JOB-ACCESS-TOKEN: abc123
   "executorRouteStrategy": "FIRST",
   "misfireStrategy": "DO_NOTHING",
   "executorBlockStrategy": "SERIAL_EXECUTION"
+}
+
+###
+
+POST http://localhost:8080/xxl-job-admin/api/job/update-schedule
+Content-Type: application/json
+XXL-JOB-ACCESS-TOKEN: abc123
+
+{
+  "id": 3,
+  "scheduleType": "FIX_RATE",
+  "scheduleConf": 30
+}
+
+###
+
+POST http://localhost:8080/xxl-job-admin/api/job/gid
+Content-Type: application/json
+XXL-JOB-ACCESS-TOKEN: abc123
+
+{
+  "appName": "xxl-job-executor-sample"
 }
 
 ###

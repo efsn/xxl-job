@@ -1,8 +1,12 @@
 package com.xxl.job.admin.controller;
 
 import com.xxl.job.admin.controller.annotation.PermissionLimit;
+import com.xxl.job.admin.controller.request.QueryGidParam;
 import com.xxl.job.admin.core.conf.XxlJobAdminConfig;
+import com.xxl.job.admin.core.model.XxlJobGroup;
 import com.xxl.job.admin.core.model.XxlJobInfo;
+import com.xxl.job.admin.core.util.I18nUtil;
+import com.xxl.job.admin.dao.XxlJobGroupDao;
 import com.xxl.job.admin.service.XxlJobService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.util.GsonTool;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 /**
  * @author elmi
@@ -24,6 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/api/job")
 public class DynamicJobApiController {
 
+    @Resource
+    public XxlJobGroupDao xxlJobGroupDao;
     @Resource
     private XxlJobService xxlJobService;
 
@@ -53,16 +60,24 @@ public class DynamicJobApiController {
         }
 
         // services mapping
-        if ("add-start".equals(uri)) {
+        if ("gid".equals(uri)) {
+            String appName = GsonTool.fromJson(data, QueryGidParam.class).getAppName();
+            Optional<XxlJobGroup> group = xxlJobGroupDao.findAll().stream().filter(g -> g.getAppname().equals(appName)).findFirst();
+            if (!group.isPresent()) {
+                return new ReturnT<>(ReturnT.FAIL_CODE, (I18nUtil.getString("jobinfo_field_jobgroup") + I18nUtil.getString("system_not_found")));
+            }
+            return new ReturnT<>(String.valueOf(group.get().getId()));
+        } else if ("add-start".equals(uri)) {
             return xxlJobService.addStart(GsonTool.fromJson(data, XxlJobInfo.class));
         } else if ("update".equals(uri)) {
             return xxlJobService.update(GsonTool.fromJson(data, XxlJobInfo.class));
+        } else if ("update-schedule".equals(uri)) {
+            return xxlJobService.updateSchedule(GsonTool.fromJson(data, XxlJobInfo.class));
         } else if ("remove".equals(uri)) {
             return xxlJobService.remove(GsonTool.fromJson(data, XxlJobInfo.class).getId());
         } else {
             return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, uri-mapping(" + uri + ") not found.");
         }
-
     }
 
 }

@@ -409,10 +409,111 @@ public class XxlJobServiceImpl implements XxlJobService {
         exists_jobInfo.setExecutorFailRetryCount(jobInfo.getExecutorFailRetryCount());
         exists_jobInfo.setChildJobId(jobInfo.getChildJobId());
         exists_jobInfo.setTriggerNextTime(nextTriggerTime);
-
         exists_jobInfo.setUpdateTime(new Date());
         xxlJobInfoDao.update(exists_jobInfo);
 
+        return ReturnT.SUCCESS;
+    }
+
+    @Override
+    public ReturnT<String> updateSchedule(XxlJobInfo jobInfo) {
+
+        // valid trigger
+        ScheduleTypeEnum scheduleTypeEnum = ScheduleTypeEnum.match(jobInfo.getScheduleType(), null);
+        if (scheduleTypeEnum == null) {
+            return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")));
+        }
+        if (scheduleTypeEnum == ScheduleTypeEnum.CRON) {
+            if (jobInfo.getScheduleConf() == null || !CronExpression.isValidExpression(jobInfo.getScheduleConf())) {
+                return new ReturnT<String>(ReturnT.FAIL_CODE, "Cron" + I18nUtil.getString("system_unvalid"));
+            }
+        } else if (scheduleTypeEnum == ScheduleTypeEnum.FIX_RATE /*|| scheduleTypeEnum == ScheduleTypeEnum.FIX_DELAY*/) {
+            if (jobInfo.getScheduleConf() == null) {
+                return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")));
+            }
+            try {
+                int fixSecond = Integer.valueOf(jobInfo.getScheduleConf());
+                if (fixSecond < 1) {
+                    return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")));
+                }
+            } catch (Exception e) {
+                return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")));
+            }
+        }
+
+        // 》ChildJobId valid
+        if (jobInfo.getChildJobId() != null && jobInfo.getChildJobId().trim().length() > 0) {
+            String[] childJobIds = jobInfo.getChildJobId().split(",");
+            for (String childJobIdItem : childJobIds) {
+                if (childJobIdItem != null && childJobIdItem.trim().length() > 0 && isNumeric(childJobIdItem)) {
+                    XxlJobInfo childJobInfo = xxlJobInfoDao.loadById(Integer.parseInt(childJobIdItem));
+                    if (childJobInfo == null) {
+                        return new ReturnT<String>(ReturnT.FAIL_CODE,
+                                MessageFormat.format((I18nUtil.getString("jobinfo_field_childJobId") + "({0})" + I18nUtil.getString("system_not_found")), childJobIdItem));
+                    }
+                } else {
+                    return new ReturnT<String>(ReturnT.FAIL_CODE,
+                            MessageFormat.format((I18nUtil.getString("jobinfo_field_childJobId") + "({0})" + I18nUtil.getString("system_unvalid")), childJobIdItem));
+                }
+            }
+
+            // join , avoid "xxx,,"
+            String temp = "";
+            for (String item : childJobIds) {
+                temp += item + ",";
+            }
+            temp = temp.substring(0, temp.length() - 1);
+
+            jobInfo.setChildJobId(temp);
+        }
+
+        // group valid
+        if(jobInfo.getJobGroup() > 0){
+            XxlJobGroup jobGroup = xxlJobGroupDao.load(jobInfo.getJobGroup());
+            if (jobGroup == null) {
+                return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("jobinfo_field_jobgroup") + I18nUtil.getString("system_unvalid")));
+            }
+        }
+
+        // stage job info
+        XxlJobInfo exists_jobInfo = xxlJobInfoDao.loadById(jobInfo.getId());
+        if (exists_jobInfo == null) {
+            return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("jobinfo_field_id") + I18nUtil.getString("system_not_found")));
+        }
+
+        // next trigger time (5s后生效，避开预读周期)
+        long nextTriggerTime = exists_jobInfo.getTriggerNextTime();
+        boolean scheduleDataNotChanged = jobInfo.getScheduleType().equals(exists_jobInfo.getScheduleType()) && jobInfo.getScheduleConf().equals(exists_jobInfo.getScheduleConf());
+        if (exists_jobInfo.getTriggerStatus() == 1 && !scheduleDataNotChanged) {
+            try {
+                Date nextValidTime = JobScheduleHelper.generateNextValidTime(jobInfo, new Date(System.currentTimeMillis() + JobScheduleHelper.PRE_READ_MS));
+                if (nextValidTime == null) {
+                    return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")));
+                }
+                nextTriggerTime = nextValidTime.getTime();
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")));
+            }
+        }
+
+        exists_jobInfo.setJobGroup(jobInfo.getJobGroup());
+        exists_jobInfo.setJobDesc(jobInfo.getJobDesc());
+        exists_jobInfo.setAuthor(jobInfo.getAuthor());
+        exists_jobInfo.setAlarmEmail(jobInfo.getAlarmEmail());
+        exists_jobInfo.setScheduleType(jobInfo.getScheduleType());
+        exists_jobInfo.setScheduleConf(jobInfo.getScheduleConf());
+        exists_jobInfo.setMisfireStrategy(jobInfo.getMisfireStrategy());
+        exists_jobInfo.setExecutorRouteStrategy(jobInfo.getExecutorRouteStrategy());
+        exists_jobInfo.setExecutorHandler(jobInfo.getExecutorHandler());
+        exists_jobInfo.setExecutorParam(jobInfo.getExecutorParam());
+        exists_jobInfo.setExecutorBlockStrategy(jobInfo.getExecutorBlockStrategy());
+        exists_jobInfo.setExecutorTimeout(jobInfo.getExecutorTimeout());
+        exists_jobInfo.setExecutorFailRetryCount(jobInfo.getExecutorFailRetryCount());
+        exists_jobInfo.setChildJobId(jobInfo.getChildJobId());
+        exists_jobInfo.setTriggerNextTime(nextTriggerTime);
+        exists_jobInfo.setUpdateTime(new Date());
+        xxlJobInfoDao.update(exists_jobInfo);
 
         return ReturnT.SUCCESS;
     }

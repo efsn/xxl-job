@@ -1,0 +1,13 @@
+version: "3.5"
+services:
+  mysql:
+    image: mysql:8.0.18
+    container_name: mysql-local
+    volumes:
+      - ./db/tables_xxl_job.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 3306:3306
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=root_pwd
+    command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_general_ci']
