@@ -1,0 +1,75 @@
+POST http://localhost:8080/xxl-job-admin/api/job/add-start
+Content-Type: application/json
+XXL-JOB-ACCESS-TOKEN: abc123
+
+{
+  "jobGroup": "1",
+  "jobDesc": "dynamic-2",
+  "author": "dynamic",
+  "scheduleType": "FIX_RATE",
+  "scheduleConf": 15,
+  "glueType": "BEAN",
+  "executorHandler": "demoJobHandler",
+  "executorRouteStrategy": "FIRST",
+  "misfireStrategy": "DO_NOTHING",
+  "executorBlockStrategy": "SERIAL_EXECUTION"
+}
+
+###
+
+POST http://localhost:8080/xxl-job-admin/api/job/update
+Content-Type: application/json
+XXL-JOB-ACCESS-TOKEN: abc123
+
+{
+  "id": 6,
+  "jobGroup": "1",
+  "jobDesc": "dynamic-1",
+  "author": "dynamic",
+  "scheduleType": "FIX_RATE",
+  "scheduleConf": 3,
+  "glueType": "BEAN",
+  "executorHandler": "xdemoJobHandler",
+  "executorRouteStrategy": "FIRST",
+  "misfireStrategy": "DO_NOTHING",
+  "executorBlockStrategy": "SERIAL_EXECUTION"
+}
+
+###
+
+
+#// not null
+#    private int jobGroup;        // 执行器主键ID
+#    private String jobDesc;
+#
+#    // not null
+#    private String author;        // 负责人
+#    private String alarmEmail;    // 报警邮件
+#
+#    // not null
+#    private String scheduleType;            // 调度类型
+#    private String scheduleConf;            // 调度配置，值含义取决于调度类型
+#    private String misfireStrategy;            // 调度过期策略
+#
+#    // null
+#    private String executorRouteStrategy;    // 执行器路由策略
+#    private String executorHandler;            // 执行器，任务Handler名称
+#    private String executorParam;            // 执行器，任务参数
+#    private String executorBlockStrategy;    // 阻塞处理策略
+#
+#    // not null
+#    private int executorTimeout;            // 任务执行超时时间，单位秒
+#    private int executorFailRetryCount;        // 失败重试次数
+#    private String glueType = GlueTypeEnum.BEAN.getDesc();        // GLUE类型	#com.xxl.job.core.glue.GlueTypeEnum
+#
+#    // nullable
+#    private String glueSource;        // GLUE源代码
+#    private String glueRemark;        // GLUE备注
+#    private Date glueUpdatetime;    // GLUE更新时间
+#    private String childJobId;        // 子任务ID，多个逗号分隔
+#
+#
+#    // not null
+#    private int triggerStatus;        // 调度状态：0-停止，1-运行
+#    private long triggerLastTime;    // 上次调度时间
+#    private long triggerNextTime;    // 下次调度时间
