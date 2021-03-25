@@ -35,6 +35,8 @@ public interface XxlJobService {
 	 */
 	public ReturnT<String> add(XxlJobInfo jobInfo);
 
+	public ReturnT<String> addStart(XxlJobInfo jobInfo);
+
 	/**
 	 * update job
 	 *

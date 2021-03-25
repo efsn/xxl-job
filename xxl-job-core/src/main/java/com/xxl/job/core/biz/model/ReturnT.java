@@ -45,6 +45,11 @@ public class ReturnT<T> implements Serializable {
 	public T getContent() {
 		return content;
 	}
+
+	public boolean isSuccess() {
+		return SUCCESS_CODE == code;
+	}
+
 	public void setContent(T content) {
 		this.content = content;
 	}
